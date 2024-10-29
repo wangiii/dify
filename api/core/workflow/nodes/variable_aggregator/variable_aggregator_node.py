@@ -18,22 +18,21 @@ class VariableAggregatorNode(BaseNode[VariableAssignerNodeData]):
         inputs = {}
 
         if not self.node_data.advanced_settings or not self.node_data.advanced_settings.group_enabled:
+            outputs = {"output": []}
             for selector in self.node_data.variables:
                 variable = self.graph_runtime_state.variable_pool.get(selector)
                 if variable is not None:
-                    outputs = {"output": variable.to_object()}
+                    outputs["output"].extend(variable.to_object())
+                    inputs[".".join(selector[1:])] = variable.to_object()
 
-                    inputs = {".".join(selector[1:]): variable.to_object()}
-                    break
         else:
             for group in self.node_data.advanced_settings.groups:
+                outputs[group.group_name] = {"output": []}
                 for selector in group.variables:
                     variable = self.graph_runtime_state.variable_pool.get(selector)
-
                     if variable is not None:
-                        outputs[group.group_name] = {"output": variable.to_object()}
+                        outputs[group.group_name]["output"].extend(variable.to_object())
                         inputs[".".join(selector[1:])] = variable.to_object()
-                        break
 
         return NodeRunResult(status=WorkflowNodeExecutionStatus.SUCCEEDED, outputs=outputs, inputs=inputs)
 
